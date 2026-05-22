@@ -656,9 +656,10 @@ const char kWebPanelAppHtml[] PROGMEM = R"HTML(
         </div>
         <div class="field-card">
           <label class="label" for="publicKey">Public Key</label>
-          <div class="fieldline">
+          <div class="inline-actions">
             <input id="publicKey" readonly disabled>
             <button id="copyPublicKeyBtn" class="iconbtn" title="Copy public key">&#x2398;</button>
+            <button id="meshcoretelProfileBtn" class="iconbtn" title="View on meshcoretel.ru" style="display:none">&#x2139;</button>
           </div>
         </div>
       </div>
@@ -1661,7 +1662,12 @@ const char kWebPanelAppHtml[] PROGMEM = R"HTML(
       }
       const renderNeighbourId = (neighbour) => {
         const shortId = escapeHtml(neighbour.id || "--");
-        return shortId;
+        const fullId = typeof neighbour.full_id === "string" ? neighbour.full_id.trim() : "";
+        if (!/^[0-9A-Fa-f]{64}$/.test(fullId)) {
+          return shortId;
+        }
+        const href = "https://meshcoretel.ru/" + encodeURIComponent(fullId.toUpperCase());
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${shortId}</a>`;
       };
       const rows = neighbours.map((neighbour) => `<tr>
         <td>${renderNeighbourId(neighbour)}</td>
@@ -2718,6 +2724,12 @@ const char kWebPanelAppHtml[] PROGMEM = R"HTML(
           () => loadField("clock", "clockUtc", null, quiet),
           () => loadField("get public.key", "publicKey", "uppercase", quiet)
         ]);
+        const pubKeyValue = document.getElementById("publicKey").value.trim();
+        const profileBtn = document.getElementById("meshcoretelProfileBtn");
+        if (profileBtn && /^[0-9A-F]{64}$/.test(pubKeyValue)) {
+          profileBtn.onclick = () => window.open("https://meshcoretel.ru/" + encodeURIComponent(pubKeyValue), "_blank", "noopener,noreferrer");
+          profileBtn.style.display = "";
+        }
         await loadSection("Loading repeater settings...", [
           () => loadField("get name", "nodeName", null, quiet),
           () => loadField("get lat", "nodeLat", null, quiet),
